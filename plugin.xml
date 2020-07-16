@@ -52,7 +52,7 @@
       
       
 		
-		<lib-file src="src/android/HDFCLtd_PROD4.aar" />
+		<lib-file src="src/android/HDFCLtd_PROD5.aar" />
   </platform>
 
 </plugin>

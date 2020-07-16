@@ -1,4 +1,4 @@
-package  com.hdfclimited;
+package com.hdfclimited;
 
 
 import android.content.ContentResolver;
@@ -27,158 +27,106 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
-public class Adstringo extends CordovaPlugin
-{
+public class Adstringo extends CordovaPlugin {
 
 
     CallbackContext callbackContext;
     boolean settingsFlag = false;
 
-   public static CompressionTechnique df;
+    public CompressionTechnique compressionTechnique;
 
     JSONArray data;
     String action;
     String dialogueText;
 
     @Override
-    public boolean execute(final String action, final JSONArray args, final CallbackContext callbackContext)
-    {
+    public boolean execute(final String action, final JSONArray args, final CallbackContext callbackContext) {
 
         this.action = action;
         this.data = args;
         this.callbackContext = callbackContext;
         settingsFlag = false;
-       df = new CompressionTechnique(cordova.getActivity());
+        compressionTechnique = new CompressionTechnique(cordova.getActivity());
         return executecode();
     }
+
     Boolean executecode() {
 
 
+        String inputpath = "";
 
-        String inputpath="";
+        if (action.equals("compressFile")) {
 
-            if (action.equals("compressFile")) {
+            File inputImageFile = null;
+            String name = null;
+            try {
+                name = data.getString(0);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
-                String name = null;
-                try {
-                    name = data.getString(0);
-                } catch (JSONException e) {
-                    e.printStackTrace();
+            if (name.startsWith("file:///storage")) {
+                inputImageFile = new File(URI.create(name).getPath());
+
+            } else if (name.startsWith("/storage")) {
+
+                inputImageFile = new File(URI.create(name).getPath());
+            } else if (name.startsWith("/data")) {
+
+                inputImageFile = new File(URI.create(name).getPath());
+            } else {
+                String jarinptpath = getFilePathByUri(this.cordova.getActivity(), Uri.parse(name));
+                if (jarinptpath == null) {
+                    String jarinptpath1 = getpath(cordova.getActivity(), Uri.parse(name));
+                    inputImageFile = new File(jarinptpath1);
+
+                } else {
+                    inputImageFile = new File(jarinptpath);
                 }
+            }
 
-                if (name.startsWith("file:///storage")) {
+            if (inputImageFile != null && inputImageFile.exists()) {
+                File compath = compressionTechnique.gCfile(inputImageFile);
 
+                callbackContext.success(compath.toString());
+                return true;
 
+            } else {
+                Log.v("AdstringoAlert", "File doesnt exists");
+                System.out.println("File doesnt exists");
+                return false;
+            }
 
+        } else if (action.equals("compressString")) {
 
-                    File file = new File(URI.create(name).getPath());
-                    if (file.exists()) {
-                       File compath = df.gCfile(file);
-                                   
-                                    callbackContext.success(compath.toString());
-                                      return true;
-                       
-                    } else {
-                        Log.v("AdstringoAlert", "File doesnt exists");
-                        System.out.println("File doesnt exists");
-                        return false;
-                    }
-                }
-                else if(name.startsWith("/storage"))
-                {
+            String base64string = null;
+            try {
+                base64string = data.getString(0);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            String filenewName = new SimpleDateFormat("yyyyMMddhhmmss").format(new Date());
+            File photo = null;
+            photo = new File(getTempDirectoryPath(), filenewName + ".jpg");
+            if (base64string.equalsIgnoreCase("")) {
+                Log.v("AdstringoAlert", "Base64string is null");
+                return false;
+            } else {
 
-                    File file = new File(URI.create(name).getPath());
-                    if (file.exists()) {
-                    
-                        File compath = df.gCfile(file);
-                                   
-                                    callbackContext.success(compath.toString());
-                                      return true;
-                    } else {
-                        Log.v("AdstringoAlert", "File doesnt exists");
-                        System.out.println("File doesnt exists");
-                        return false;
-                    }
-                }
-                else if(name.startsWith("/data"))
-                {
-
-                    File file = new File(URI.create(name).getPath());
-                    CompressionTechnique df = new CompressionTechnique(cordova.getActivity());
-                    File compath = df.gCfile(file);
-                                   
-                     callbackContext.success(compath.toString());
-                    return true;
-                }
-                else {
-                    String jarinptpath = getFilePathByUri(this.cordova.getActivity(), Uri.parse(name));
-
-
-
-                    if(jarinptpath==null)
-                    {
-                        String jarinptpath1 = getpath(cordova.getActivity(), Uri.parse(name));
-                        File file = new File(jarinptpath1);
-                        if (file.exists()) {
-                           File compath = df.gCfile(file);
-                                   
-                                    callbackContext.success(compath.toString());
-                                      return true;
-                        } else {
-                            Log.v("AdstringoAlert", "File doesnt exists");
-                            System.out.println("File doesnt exists");
-                            return false;
-                        }
-                    }
-                    else{
-                        File file = new File(jarinptpath);
-                        if (file.exists()) {
-                          File compath = df.gCfile(file);
-                                   
-                                    callbackContext.success(compath.toString());
-                                      return true;
-
-                        } else {
-                            Log.v("AdstringoAlert", "File doesnt exists");
-                            System.out.println("File doesnt exists");
-                            return false;
-                        }
-
-                    }
-                }
-
-            } else if (action.equals("compressString")) {
-
-                String base64string = null;
-                try {
-                    base64string = data.getString(0);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                String filenewName = new SimpleDateFormat("yyyyMMddhhmmss").format(new Date());
-                File photo = null;
-                photo = new File(getTempDirectoryPath(), filenewName + ".jpg");
-                if (base64string.equalsIgnoreCase("")) {
-                    Log.v("AdstringoAlert", "Base64string is null");
+                String base64stringcomp = compressionTechnique.gC(base64string, photo.toString());
+                if (base64stringcomp.equalsIgnoreCase("")) {
+                    Log.v("AdstringoAlert", "Compressed Base64string is null");
                     return false;
                 } else {
-
-                   String base64stringcomp = df.gC(base64string, photo.toString());
-                    if (base64stringcomp.equalsIgnoreCase("")) {
-                        Log.v("AdstringoAlert", "Compressed Base64string is null");
-                        return false;
-                    } else {
-                        Log.v("AdstringoAlert", "Compressed Base64string");
-                        callbackContext.success(base64stringcomp);
-                        return true;
-                    }
-
+                    Log.v("AdstringoAlert", "Compressed Base64string");
+                    callbackContext.success(base64stringcomp);
+                    return true;
                 }
 
-
             }
-            
-            else if (action.equals("compressVideo")) {
+
+
+        } else if (action.equals("compressVideo")) {
             try {
                 inputpath = data.getString(0);
             } catch (JSONException e) {
@@ -189,32 +137,21 @@ public class Adstringo extends CordovaPlugin
             if (file.exists()) {
                 String fileExtension = inputpath.substring(inputpath.lastIndexOf(".") + 1).trim().toLowerCase();
 
- if( fileExtension.equalsIgnoreCase("mp3") || fileExtension.equalsIgnoreCase("mp4") || fileExtension.equalsIgnoreCase("3gp"))
-                {
-                 
-                            Context context = this.cordova.getActivity().getApplicationContext();
+                if (fileExtension.equalsIgnoreCase("mp3") || fileExtension.equalsIgnoreCase("mp4") || fileExtension.equalsIgnoreCase("3gp")) {
 
-                String outputPath= "";
-                try {
-                    outputPath = new BaseWizard.TranscodeBackgrd(context,file.getAbsolutePath(),"video").execute().get();
+
+                    String outputPath = "";
+                    outputPath = compressionTechnique.compressVideo(file);
                     callbackContext.success(outputPath);
 
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return true;
-                }
-                else
-                {
+                    return true;
+                } else {
                     callbackContext.error("File format not supported");
 
                     return false;
                 }
-                
-                
-                
+
+
             } else {
                 Log.v("AdstringoAlert", "File doesnt exists");
                 System.out.println("File doesnt exists");
@@ -222,8 +159,7 @@ public class Adstringo extends CordovaPlugin
             }
 
 
-        }
-        else if (action.equals("compressAudio")) {
+        } else if (action.equals("compressAudio")) {
             try {
                 inputpath = data.getString(0);
             } catch (JSONException e) {
@@ -235,23 +171,15 @@ public class Adstringo extends CordovaPlugin
 
                 String fileExtension = inputpath.substring(inputpath.lastIndexOf(".") + 1).trim();
 
-                if( fileExtension.equalsIgnoreCase("mp3") || fileExtension.equalsIgnoreCase("wav"))
-                {
+                if (fileExtension.equalsIgnoreCase("mp3") || fileExtension.equalsIgnoreCase("wav")) {
                     Context context = this.cordova.getActivity().getApplicationContext();
-                    String outputPath= "";
-                    try {
-                        outputPath = new BaseWizard.TranscodeBackgrd(context,file.getAbsolutePath(),"audio").execute().get();
-                        callbackContext.success(outputPath);
+                    String outputPath = "";
 
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    return  true;
-                }
-                else
-                {
+                    outputPath = compressionTechnique.compressAudio(file);
+
+                    callbackContext.success(outputPath);
+                    return true;
+                } else {
                     callbackContext.error("File format not supported");
 
                     return false;
@@ -265,22 +193,15 @@ public class Adstringo extends CordovaPlugin
             }
 
 
-        }else {
-                Log.v("AdstringoAlert", "compressFile Action not connected");
-                System.out.println("Action not connected");
-                return false;
+        } else {
+            Log.v("AdstringoAlert", "compressFile Action not connected");
+            System.out.println("Action not connected");
+            return false;
 
-            }
+        }
 
 
     }
-
-
-
-
-
-
-
 
 
     public static String getFilePathByUri(Context context, Uri uri) {
@@ -374,8 +295,7 @@ public class Adstringo extends CordovaPlugin
 //                    }
 
                     return path;
-                }
-                else if (isMediaDocument(uri)) {
+                } else if (isMediaDocument(uri)) {
                     // MediaProvider
                     final String docId = DocumentsContract.getDocumentId(uri);
                     final String[] split = docId.split(":");
@@ -436,9 +356,9 @@ public class Adstringo extends CordovaPlugin
 
             cache = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
                     "/Compressed_images/" + cordova.getActivity().getPackageName());
-            double cac=cache.length();
+            double cac = cache.length();
 
-            System.out.println("Intial file size......."+cac);
+            System.out.println("Intial file size......." + cac);
 
         }
         // Use internal storage
@@ -494,9 +414,6 @@ public class Adstringo extends CordovaPlugin
         return result;
 
     }
-
-
-
 
 
 }
