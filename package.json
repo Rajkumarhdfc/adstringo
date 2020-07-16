@@ -1,7 +1,7 @@
 
 {
   "name": "Hdfclimited_prod",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "Adstringo Image Compression POC",
   "cordova": {
     "id": "com.hdfclimited",
